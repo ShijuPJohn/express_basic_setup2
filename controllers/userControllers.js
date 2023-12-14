@@ -2,18 +2,51 @@ const {data, User} = require("../models/models");
 exports.getAllUsers = (req, res) => {
     res.status(200).json({results: data.length, data})
 }
-exports.createUser = (req, res) => {
-    req.body.id = data[data.length - 1].id + 1
-    console.log(req.body)
-    const userFromReq = new User(req.body.id, req.body.name, req.body.email, req.body.password, req.body.profilePic, req.body.about)
-    data.push(userFromReq)
-    res.status(201).json({message: "in progress", data})
+exports.createUser = async (req, res) => {
+    try {
+        const userFromReq = await User.create(req.body);
+        const user = await userFromReq.save();
+        res.status(201).json({status: "created", user})
+    } catch (e) {
+        console.log(e)
+        res.status(400).json({status: "error"})
+    }
 }
-exports.getUserById = (req, res) => {
-    const user = data.find(el => el.id === Number.parseInt(req.params["id"], 10))
-    res.json({message: "success", data: user})
+exports.getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find();
+        res.status(200).json({status: "success", length: users.length, users})
+    } catch (e) {
+        console.log(e)
+        res.status(400).json({status: "error"})
+    }
 };
-exports.sampleMiddleware = (req, res, next) => {
-    console.log("Hello from the sample middleware");
-    next();
+exports.getUserById = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        // User.findOne({_id:req.params.id});
+        res.status(200).json({status: "success", user})
+    } catch (e) {
+        console.log(e)
+        res.status(400).json({status: "error"})
+    }
+};
+exports.updateUserById = async (req, res) => {
+    try {
+        const user = await User.findByIdAndUpdate(req.params.id, req.body, {new: true, runValidators: true});
+        console.log(user)
+        res.status(201).json({status: "success", user})
+    } catch (e) {
+        console.log(e)
+        res.status(400).json({status: "error"})
+    }
+}
+exports.deleteUserById = async (req, res) => {
+    try {
+        await User.findByIdAndDelete(req.params.id,);
+        res.status(200).json({status: "success"})
+    } catch (e) {
+        console.log(e)
+        res.status(400).json({status: "error"})
+    }
 }
